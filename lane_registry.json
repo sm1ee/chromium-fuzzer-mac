@@ -1,0 +1,821 @@
+{
+  "version": 1,
+  "lanes": {
+    "audio_processing_fuzzer": {
+      "display_name": "Audio Processing Throughput Lane",
+      "family": "audio/media",
+      "target_family": "audio-dsp",
+      "lane_type": "throughput",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "binary blobs",
+      "api_surface": "",
+      "expected_signals": [
+        "heap overwrite",
+        "format edge case",
+        "state accumulation"
+      ],
+      "seed_clusters": [
+        "small-valid",
+        "boundary-values",
+        "rare-channel-layouts"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-corpus",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "stop_go": {
+        "keep": [
+          "corpus growth continues",
+          "new structured pulse lines appear",
+          "sanitizer summary appears"
+        ],
+        "stop": [
+          "48h no novelty",
+          "non-zero exits repeat",
+          "signal only mirrors parser noise"
+        ]
+      }
+    },
+    "indexed_db_leveldb_coding_decodeidbkey_fuzzer": {
+      "display_name": "IndexedDB Decode Parser Fallback Lane",
+      "family": "storage/indexeddb",
+      "target_family": "indexeddb-storage",
+      "lane_type": "parser-fallback",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "binary key encoding blobs",
+      "api_surface": "",
+      "expected_signals": [
+        "deserialization boundary mismatch",
+        "malformed key decoding",
+        "heap misuse around coding layer"
+      ],
+      "seed_clusters": [
+        "short-keys",
+        "nested-arrays",
+        "boundary-lengths"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-corpus",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "successor_lane": "indexeddb_stateful_sequence",
+      "stop_go": {
+        "keep": [
+          "new coverage in coding path",
+          "deserialization-related stacks appear"
+        ],
+        "stop": [
+          "stateful lane is available and stable",
+          "parser-only novelty stalls"
+        ]
+      }
+    },
+    "indexeddb_stateful_sequence": {
+      "display_name": "IndexedDB Stateful Main Lane",
+      "family": "storage/indexeddb",
+      "target_family": "indexeddb-storage",
+      "lane_type": "main-stateful",
+      "engine": "fuzztest",
+      "sanitizer": "asan",
+      "input_model": "typed API sequence",
+      "api_surface": "open / upgrade / versionchange / transaction / close",
+      "interesting_transitions": [
+        "open -> upgrade -> abort",
+        "transaction -> close -> callback",
+        "stale handle reuse",
+        "versionchange while resources are still live"
+      ],
+      "expected_signals": [
+        "lifecycle mismatch",
+        "state desynchronization",
+        "stale handle reuse"
+      ],
+      "seed_clusters": [
+        "open-upgrade-abort",
+        "transaction-close-callback",
+        "stale-handle-reuse"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-sequence-clusters",
+        "sync_strategy": "delayed-sync",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "binary_candidates": [
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzz-asan-indexeddb/indexed_db_leveldb_coding_sequence_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest/indexed_db_leveldb_coding_sequence_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp/indexed_db_leveldb_coding_sequence_fuzztest"
+      ],
+      "build_hints": [
+        "autoninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest indexed_db_leveldb_coding_sequence_fuzztest",
+        "autoninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzz-asan-indexeddb indexed_db_leveldb_coding_sequence_fuzztest",
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp indexed_db_leveldb_coding_sequence_fuzztest"
+      ],
+      "stop_go": {
+        "keep": [
+          "sequence coverage increases",
+          "stateful novelty appears",
+          "close/reopen and versionchange paths are exercised"
+        ],
+        "stop": [
+          "48h no new sequence novelty",
+          "timeouts dominate",
+          "only parser-like noise remains"
+        ]
+      }
+    },
+    "dawn_wire_lifecycle_sequence": {
+      "display_name": "Dawn Wire Lifecycle Main Lane",
+      "family": "gpu/dawn-wire",
+      "target_family": "gpu-wire",
+      "lane_type": "main-stateful",
+      "engine": "fuzztest",
+      "sanitizer": "asan",
+      "input_model": "typed API sequence",
+      "api_surface": "createBuffer / mapAsync / unmap / destroy / submit / reset / destroy device / createPipelineAsync",
+      "interesting_transitions": [
+        "mapAsync while destroyed",
+        "double unmap",
+        "submit on destroyed queue",
+        "callback during reentrancy",
+        "createBuffer after device destroy",
+        "destroy device while mapAsync pending",
+        "createPipelineAsync cache race",
+        "wire client disconnect with pending callbacks",
+        "wire reset with stale logical slot reuse",
+        "reconnect after disconnect then same-slot object recreation",
+        "pipeline async burst with duplicate descriptor reuse",
+        "wire client/server split handle reuse"
+      ],
+      "expected_signals": [
+        "wire lifetime mismatch",
+        "callback reentrancy bug",
+        "stale object reuse across submit/reset",
+        "device teardown ordering bug",
+        "async pipeline callback race"
+      ],
+      "seed_clusters": [
+        "map-destroy-callback",
+        "submit-reset-destroy",
+        "double-unmap",
+        "device-destroy-pending-map",
+        "pipeline-async-race",
+        "disconnect-stale-slot-reuse",
+        "reset-reconnect-recreate"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-sequence-clusters",
+        "sync_strategy": "delayed-sync",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "binary_candidates": [
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/dawn_wire_lifecycle_sequence_fuzztest_DawnWireLifecycleSequenceFuzzTest_HandlesWireLifecycleSequence_fuzzer",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/dawn_wire_lifecycle_sequence_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp/dawn_wire_lifecycle_sequence_fuzztest"
+      ],
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend dawn_wire_lifecycle_sequence_fuzztest_DawnWireLifecycleSequenceFuzzTest_HandlesWireLifecycleSequence_fuzzer",
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend dawn_wire_lifecycle_sequence_fuzztest",
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp dawn_wire_lifecycle_sequence_fuzztest"
+      ],
+      "stop_go": {
+        "keep": [
+          "callback and queue lifecycle paths expand",
+          "destroy/reset sequences stay stable",
+          "wire-side novelty appears"
+        ],
+        "stop": [
+          "48h no new sequence novelty",
+          "timeouts dominate",
+          "only parser-style wire decode noise remains"
+        ]
+      }
+    },
+    "angle_translator_fuzzer": {
+      "display_name": "ANGLE Translator Throughput Lane",
+      "family": "gpu/shader",
+      "target_family": "gpu-compiler",
+      "lane_type": "throughput-noisy",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "128-byte ShaderDumpHeader plus NUL-terminated shader source",
+      "api_surface": "ANGLE shader translator frontend plus backend output generators",
+      "expected_signals": [
+        "compiler crash",
+        "translation edge case",
+        "precision mismatch"
+      ],
+      "seed_clusters": [
+        "header-aware-source",
+        "output-bucket-shaders",
+        "precision-and-layout-qualifiers"
+      ],
+      "sample_diversity": {
+        "strategy": "header-aware-corpus",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": [
+          "unsupported option combinations return early",
+          "unprintable shader bytes are normalized into whitespace"
+        ]
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend angle_translator_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "header and shader corpus both keep growing",
+          "compiler-specific stacks appear"
+        ],
+        "stop": [
+          "resource pressure is high",
+          "noise dominates signal"
+        ]
+      }
+    },
+    "angle_pixelbytes_width_fuzzer": {
+      "display_name": "ANGLE PixelBytes Targeted Lane",
+      "family": "gpu/renderer-vulkan",
+      "target_family": "gpu-bridge",
+      "lane_type": "targeted-arithmetic",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured width/height/depth/pixelBytes tuples",
+      "api_surface": "stageSubresourceUpdateImpl arithmetic model",
+      "expected_signals": [
+        "row pitch overflow",
+        "allocation undersize",
+        "staging write beyond intended allocation"
+      ],
+      "seed_clusters": [
+        "signed-boundary",
+        "u32-wrap",
+        "pixelBytes-width-corner"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-boundary-tuples",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend angle_pixelbytes_width_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "wraparound candidates are exercised",
+          "allocation undersize cases survive minimization"
+        ],
+        "stop": [
+          "no new arithmetic edge after 24h",
+          "only duplicate tuple mutations remain"
+        ]
+      }
+    },
+    "angle_texture_vk_pitch_narrow_fuzzer": {
+      "display_name": "ANGLE Vulkan Texture Pitch Narrow Lane",
+      "family": "gpu/renderer-vulkan",
+      "target_family": "gpu-bridge",
+      "lane_type": "targeted-arithmetic",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured width/height/depth/pixelBytes/layerCount tuples",
+      "api_surface": "TextureVk copySubTextureImpl row/depth/layer pitch arithmetic",
+      "expected_signals": [
+        "row pitch truncation",
+        "depth pitch truncation",
+        "layer pitch truncation"
+      ],
+      "seed_clusters": [
+        "u32-row-wrap",
+        "u32-depth-wrap",
+        "layerCount-amplification"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-boundary-tuples",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend angle_texture_vk_pitch_narrow_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "row/depth/layer wrap tuples continue to diversify",
+          "wide-allocation versus narrow-pitch mismatches stay reachable"
+        ],
+        "stop": [
+          "24h no new wrap tuple",
+          "only duplicate tuple permutations remain"
+        ]
+      }
+    },
+    "angle_metal_mipmap_narrow": {
+      "display_name": "ANGLE Metal Mipmap Narrow Lane",
+      "family": "gpu/narrow-arith",
+      "target_family": "gpu-bridge",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured text key/value tuples",
+      "api_surface": "TextureMtl mip generation staging arithmetic",
+      "expected_signals": [
+        "base-level row pitch wrap",
+        "depth pitch truncation",
+        "destination allocation undersize"
+      ],
+      "seed_clusters": [
+        "rgba32f-16384-square",
+        "u32-depthpitch-wrap",
+        "pixelbytes-intmax"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-boundary-tuples",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend angle_metal_mipmap_narrow_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "wraparound tuples continue to diversify",
+          "source and destination arithmetic mismatches reproduce"
+        ],
+        "stop": [
+          "24h no new mismatch tuple",
+          "resource pressure requires pruning"
+        ]
+      }
+    },
+    "dawn_metal_bytes_per_image_narrow": {
+      "display_name": "Dawn Metal BytesPerImage Narrow Lane",
+      "family": "gpu/narrow-arith",
+      "target_family": "gpu-bridge",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured text key/value tuples",
+      "api_surface": "UtilsMetal bytesPerImage plus CommandBufferMTL bufferOffset advance",
+      "expected_signals": [
+        "blocksPerImage truncation",
+        "bytesPerImage wrap",
+        "buffer offset drift"
+      ],
+      "seed_clusters": [
+        "u32-bpi-wrap",
+        "row-plus-image-advance",
+        "large-blockbyte-matrix"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-boundary-tuples",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend dawn_metal_bytes_per_image_narrow_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "bytesPerImage and next-offset mismatches are both exercised",
+          "new blocksPerRow x rowsPerImage corners appear"
+        ],
+        "stop": [
+          "24h no new mismatch tuple",
+          "resource pressure requires pruning"
+        ]
+      }
+    },
+    "angle_metal_mtl_utils_rowpitch_narrow": {
+      "display_name": "ANGLE Metal RowPitch Narrow Lane",
+      "family": "gpu/narrow-arith",
+      "target_family": "gpu-bridge",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured text key/value tuples",
+      "api_surface": "mtl_utils CPU-accessible texture row pitch arithmetic",
+      "expected_signals": [
+        "row pitch truncation",
+        "conversion row undersize",
+        "allocation drift from wide model"
+      ],
+      "seed_clusters": [
+        "pixelbytes-width-wrap",
+        "16384-square",
+        "u32-rowpitch"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-boundary-tuples",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend angle_metal_mtl_utils_rowpitch_narrow_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "rowPitch and alloc mismatches both remain reachable",
+          "boundary tuples still grow the focused corpus"
+        ],
+        "stop": [
+          "24h no new mismatch tuple",
+          "resource pressure requires pruning"
+        ]
+      }
+    },
+    "tint_wgsl_fuzzer": {
+      "display_name": "Tint WGSL Precision Lane",
+      "family": "gpu/wgsl",
+      "target_family": "gpu-compiler",
+      "lane_type": "throughput-structured",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "valid-plus-bending WGSL shaders",
+      "api_surface": "",
+      "expected_signals": [
+        "shader translator crash",
+        "precision mismatch",
+        "resource binding edge case"
+      ],
+      "seed_clusters": [
+        "small-valid-wgsl",
+        "precision-heavy-variants",
+        "resource-binding-weirdness"
+      ],
+      "sample_diversity": {
+        "strategy": "valid-plus-bending",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "stop_go": {
+        "keep": [
+          "valid shader diversity stays high",
+          "translator/compiler alerts appear",
+          "precision-focused clusters continue to mutate"
+        ],
+        "stop": [
+          "resource pressure is high",
+          "signal collapses into duplicate parser noise"
+        ]
+      }
+    },
+    "v8_script_parser_fuzzer": {
+      "display_name": "V8 Semantic Transform Lane",
+      "family": "v8/jit",
+      "target_family": "v8-jit",
+      "lane_type": "throughput-semantic",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "semantic-preserving JS snippets",
+      "api_surface": "parser / builtins / map transition / jit feedback",
+      "expected_signals": [
+        "parser-runtime mismatch",
+        "weak primitive preservation",
+        "semantic transform novelty"
+      ],
+      "seed_clusters": [
+        "small-valid-js",
+        "semantic-equivalent-transform",
+        "weak-primitive-snippets",
+        "map-transition-builtins"
+      ],
+      "sample_diversity": {
+        "strategy": "semantic-transform-plus-diversity",
+        "sync_strategy": "delayed-sync",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "stop_go": {
+        "keep": [
+          "sample diversity stays broad",
+          "coverage grows without cluster collapse",
+          "builtins/map-transition motifs keep appearing"
+        ],
+        "stop": [
+          "coverage grows but diversity collapses",
+          "48h no new semantic cluster",
+          "resource pressure requires pruning"
+        ]
+      }
+    },
+    "v8_mapset_semantic_fuzzer": {
+      "display_name": "V8 MapSet Semantic Lane",
+      "family": "v8/jit",
+      "target_family": "v8-jit",
+      "lane_type": "targeted-semantic",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "structured byte knobs expanded into optimization-aware JS",
+      "api_surface": "Map.get / has / size / iterator next / Set.has / size / OrderedHash mutation",
+      "expected_signals": [
+        "ordered hash invalidation mismatch",
+        "stable map dependency breakage",
+        "builtin lowering inconsistency",
+        "jit specialization vs runtime mutation drift"
+      ],
+      "seed_clusters": [
+        "map-delete-next",
+        "set-clear-next",
+        "cross-orderedhash"
+      ],
+      "sample_diversity": {
+        "strategy": "targeted-semantic-programs",
+        "sync_strategy": "isolated",
+        "validity_pattern": "always-valid generated JS",
+        "noise_patterns": [
+          "harness-originated callback amplification",
+          "non-repro OOM from self-growth patterns"
+        ]
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend v8_mapset_semantic_fuzzer"
+      ],
+      "stop_go": {
+        "keep": [
+          "feature growth continues on ordered hash paths",
+          "corpus gains new semantic clusters",
+          "no harness-originated OOM or infinite growth remains"
+        ],
+        "stop": [
+          "feature growth stalls after seed saturation",
+          "resource pressure is high",
+          "signals collapse into harness-only artifacts"
+        ]
+      }
+    },
+    "v8_mapset_weakref": {
+      "display_name": "V8 MapSet WeakRef Lane",
+      "family": "v8/semantic",
+      "target_family": "v8-jit",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "16-byte semantic knob vector",
+      "api_surface": "WeakMap / WeakSet / WeakRef / FinalizationRegistry / gc",
+      "expected_signals": [
+        "weak reachability accounting mismatch",
+        "gc interaction bug",
+        "finalization callback reentrancy smell"
+      ],
+      "seed_clusters": [
+        "weakmap-drop-gc",
+        "weakset-drop-gc",
+        "nested-map-promotion"
+      ],
+      "sample_diversity": {
+        "strategy": "single-axis-targeted",
+        "sync_strategy": "isolated",
+        "validity_pattern": "always-valid generated JS",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend v8_mapset_weakref_fuzzer"
+      ]
+    },
+    "v8_mapset_proxy": {
+      "display_name": "V8 MapSet Proxy Lane",
+      "family": "v8/semantic",
+      "target_family": "v8-jit",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "16-byte semantic knob vector",
+      "api_surface": "Proxy traps / Symbol keys / custom @@iterator / Map reentrancy",
+      "expected_signals": [
+        "proxy trap reentrancy mismatch",
+        "symbol-key fast path drift",
+        "iterator protocol invalidation"
+      ],
+      "seed_clusters": [
+        "proxy-get-reenter-map",
+        "deleteProperty-iterate",
+        "symbol-iterator-mix"
+      ],
+      "sample_diversity": {
+        "strategy": "single-axis-targeted",
+        "sync_strategy": "isolated",
+        "validity_pattern": "always-valid generated JS",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend v8_mapset_proxy_fuzzer"
+      ]
+    },
+    "v8_mapset_arraybuffer": {
+      "display_name": "V8 MapSet ArrayBuffer Lane",
+      "family": "v8/semantic",
+      "target_family": "v8-jit",
+      "lane_type": "throughput-targeted",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "16-byte semantic knob vector",
+      "api_surface": "TypedArray / DataView / ArrayBuffer / SharedArrayBuffer / Atomics / Map key identity",
+      "expected_signals": [
+        "typed array bridge inconsistency",
+        "arraybuffer view lifetime mismatch",
+        "atomics/runtime interaction bug"
+      ],
+      "seed_clusters": [
+        "typedarray-map-key",
+        "dataview-mutation",
+        "sab-atomics-bridge"
+      ],
+      "sample_diversity": {
+        "strategy": "single-axis-targeted",
+        "sync_strategy": "isolated",
+        "validity_pattern": "always-valid generated JS",
+        "noise_patterns": []
+      },
+      "build_hints": [
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend v8_mapset_arraybuffer_fuzzer"
+      ]
+    },
+    "webcodecs_video_decoder_fuzzer": {
+      "display_name": "WebCodecs Video Decoder Structured Parser Lane",
+      "family": "media/webcodecs",
+      "target_family": "webcodecs-media",
+      "lane_type": "structured-parser",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "textproto invocation sequence",
+      "api_surface": "configure / decode / flush / reset / close",
+      "expected_signals": [
+        "decoder state mismatch",
+        "textproto-valid edge case",
+        "codec backend crash"
+      ],
+      "seed_clusters": [
+        "valid-codec-sequences",
+        "spec-bending-configs",
+        "flush-reset-close-ordering"
+      ],
+      "sample_diversity": {
+        "strategy": "valid-plus-bending",
+        "sync_strategy": "isolated",
+        "validity_pattern": "invocations:",
+        "noise_patterns": [
+          "Error parsing text-format wc_fuzzer.VideoDecoderApiInvocationSequence",
+          "Warning parsing text-format wc_fuzzer.VideoDecoderApiInvocationSequence"
+        ]
+      },
+      "stop_go": {
+        "keep": [
+          "valid corpus ratio stays high",
+          "codec-path alerts appear",
+          "NEW coverage continues"
+        ],
+        "stop": [
+          "parser reject ratio dominates",
+          "valid seed cluster collapses",
+          "resource pressure requires pruning"
+        ]
+      }
+    },
+    "mojo_core_channel_fuzzer": {
+      "display_name": "Mojo Channel Parser Fallback Lane",
+      "family": "ipc/mojo",
+      "target_family": "mojo-ipc",
+      "lane_type": "parser-fallback",
+      "engine": "libfuzzer",
+      "sanitizer": "asan",
+      "input_model": "message stream blobs",
+      "api_surface": "",
+      "expected_signals": [
+        "channel parser mismatch",
+        "invalid header edge case",
+        "serialization boundary issue"
+      ],
+      "seed_clusters": [
+        "short-messages",
+        "header-size-boundaries",
+        "route-like-prefixes"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-corpus",
+        "sync_strategy": "isolated",
+        "validity_pattern": "",
+        "noise_patterns": [
+          "Invalid message size",
+          "Invalid message header size"
+        ]
+      },
+      "successor_lane": "mojo_lifecycle_sequence",
+      "stop_go": {
+        "keep": [
+          "serialization signal remains interesting"
+        ],
+        "stop": [
+          "lifecycle lane is available",
+          "only header-size noise remains"
+        ]
+      }
+    },
+    "mojo_lifecycle_sequence": {
+      "display_name": "Mojo Lifecycle Main Lane",
+      "family": "ipc/mojo",
+      "target_family": "mojo-ipc",
+      "lane_type": "main-stateful",
+      "engine": "fuzztest",
+      "sanitizer": "asan",
+      "input_model": "typed lifecycle sequence",
+      "api_surface": "connect / route / message / disconnect / reconnect",
+      "interesting_transitions": [
+        "stale route",
+        "double close",
+        "reused handle after reconnect",
+        "message after OnError"
+      ],
+      "expected_signals": [
+        "lifecycle mismatch",
+        "route capability bug",
+        "use-after-free around disconnect"
+      ],
+      "seed_clusters": [
+        "stale-route",
+        "double-close",
+        "reconnect-reuse"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-sequence-clusters",
+        "sync_strategy": "delayed-sync",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "binary_candidates": [
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest/mojo_core_channel_lifecycle_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp/mojo_core_channel_lifecycle_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/mojo_core_channel_lifecycle_fuzztest"
+      ],
+      "build_hints": [
+        "autoninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest mojo_core_channel_lifecycle_fuzztest",
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp mojo_core_channel_lifecycle_fuzztest"
+      ]
+    },
+    "webaudio_graph_lifecycle": {
+      "display_name": "WebAudio Graph Lifecycle Main Lane",
+      "family": "audio/webaudio",
+      "target_family": "webaudio-media",
+      "lane_type": "main-stateful",
+      "engine": "fuzztest",
+      "sanitizer": "tsan",
+      "input_model": "typed graph sequence",
+      "api_surface": "node create / connect / disconnect / close / collect",
+      "interesting_transitions": [
+        "connect / disconnect / reconnect",
+        "close-after-use",
+        "node create / destroy race",
+        "buffer swap while graph is live"
+      ],
+      "expected_signals": [
+        "data race",
+        "graph lifecycle bug",
+        "thread ownership mismatch"
+      ],
+      "seed_clusters": [
+        "connect-disconnect",
+        "close-after-use",
+        "collect-while-live"
+      ],
+      "sample_diversity": {
+        "strategy": "independent-sequence-clusters",
+        "sync_strategy": "delayed-sync",
+        "validity_pattern": "",
+        "noise_patterns": []
+      },
+      "binary_candidates": [
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest/audio_context_manager_lifecycle_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp/audio_context_manager_lifecycle_fuzztest",
+        "/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/audio_context_manager_mojolpm_fuzzer"
+      ],
+      "build_hints": [
+        "autoninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/fuzztest audio_context_manager_lifecycle_fuzztest",
+        "ninja -C /Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/asan-vrp audio_context_manager_lifecycle_fuzztest"
+      ],
+      "stop_go": {
+        "keep": [
+          "start/stop/close ordering stays diverse",
+          "bad-message protocol violations cluster into meaningful buckets",
+          "context concurrency patterns evolve"
+        ],
+        "stop": [
+          "only duplicate bad-message noise remains",
+          "48h no new lifecycle novelty",
+          "resource pressure requires pruning"
+        ]
+      }
+    }
+  }
+}

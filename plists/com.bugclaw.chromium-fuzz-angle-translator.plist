@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bugclaw.chromium-fuzz-angle-translator</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/bugclaw/bugbounty-skills/skills/browser/chromium-fuzzing-lab/scripts/run_libfuzzer_target.sh</string>
+        <string>--binary</string>
+        <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/angle_translator_fuzzer</string>
+        <string>--component</string>
+        <string>gpu</string>
+        <string>--target</string>
+        <string>angle_translator_fuzzer</string>
+        <string>--sanitizer</string>
+        <string>asan</string>
+        <string>--platform</string>
+        <string>desktop</string>
+        <string>--artifact-root</string>
+        <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/managed/artifacts</string>
+        <string>--corpus-dir</string>
+        <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/corpus/angle_translator</string>
+        <string>--max-total-time</string>
+        <string>172800</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/bugclaw</string>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/logs/com.bugclaw.chromium-fuzz-angle-translator.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/logs/com.bugclaw.chromium-fuzz-angle-translator.stderr.log</string>
+</dict>
+</plist>

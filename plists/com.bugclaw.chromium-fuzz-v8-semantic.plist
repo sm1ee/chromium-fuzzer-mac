@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bugclaw.chromium-fuzz-v8-semantic</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/run_v8_semantic_fuzz.sh</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/bugclaw</string>
+        <key>CHROMIUM_FUZZ_LANE_REGISTRY</key>
+        <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/managed/lane_registry.json</string>
+    </dict>
+    <key>WorkingDirectory</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp</string>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/logs/com.bugclaw.chromium-fuzz-v8-semantic.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/bugclaw/.openclaw/workspace/chromium-vrp/fuzz/logs/com.bugclaw.chromium-fuzz-v8-semantic.stderr.log</string>
+</dict>
+</plist>
