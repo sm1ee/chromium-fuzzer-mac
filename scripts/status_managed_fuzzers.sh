@@ -563,6 +563,15 @@ running_proc_line_for() {
   printf '%s\n' "$process_snapshot" | grep -F "/${fuzzer} " | head -n 1 || true
 }
 
+running_root_count_for() {
+  local fuzzer="$1"
+  printf '%s\n' "$process_snapshot" |
+    awk -v target="$fuzzer" '
+      /run_libfuzzer_target[.]sh/ && index($0, "--target " target) { count++ }
+      END { print count + 0 }
+    '
+}
+
 state_for() {
   local proc_line="$1"
   local exit_code="$2"
@@ -633,6 +642,8 @@ build_status_line() {
   local lane_summary=""
   local binary_path=""
   local binary_summary=""
+  local root_count="0"
+  local duplicate_note=""
   local log_mtime="-"
   local pid="-"
   local etime="-"
@@ -642,6 +653,7 @@ build_status_line() {
   log_file="$(latest_log_for "$fuzzer")"
   packet_file="$(latest_lane_packet_for "$fuzzer")"
   proc_line="$(running_proc_line_for "$fuzzer")"
+  root_count="$(running_root_count_for "$fuzzer")"
   exit_code="$(latest_exit_code_for "$fuzzer")"
   max_total_time="$(latest_max_total_time_for "$fuzzer")"
   binary_path="$(latest_binary_for "$fuzzer")"
@@ -654,6 +666,10 @@ build_status_line() {
     if (( log_age > STALE_STOPPED_SESSION_SECS )); then
       state="stale-$state"
     fi
+  fi
+
+  if [[ "$root_count" =~ ^[0-9]+$ && "$root_count" -gt 1 ]]; then
+    duplicate_note=" | duplicate_roots=$root_count"
   fi
 
   if [[ -n "$proc_line" ]]; then
@@ -670,8 +686,8 @@ build_status_line() {
   lane_summary="$(lane_diversity_summary_for "$fuzzer" "$packet_file" "$log_file")"
 
   printf -- '- %s\n' "$fuzzer"
-  printf '  state: %s | pid: %s | up: %s | proc_rss: %sMB | artifacts: %s | log: %s\n' \
-    "$state" "$pid" "$etime" "$rss_mb" "$artifact_summary" "$log_mtime"
+  printf '  state: %s | pid: %s | up: %s | proc_rss: %sMB | artifacts: %s | log: %s%s\n' \
+    "$state" "$pid" "$etime" "$rss_mb" "$artifact_summary" "$log_mtime" "$duplicate_note"
   printf '  evidence: %s\n' "$binary_summary"
   printf '  focus: %s\n' "$lane_summary"
   printf '  stats: %s\n' "$(stats_for "$state" "$exit_code" "$max_total_time" "$log_summary")"

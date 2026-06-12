@@ -40,22 +40,45 @@ bootstrap_if_missing() {
   echo "bootstrapped launchagent: $label"
 }
 
-bootstrap_if_missing \
+bootstrap_managed_if_no_legacy() {
+  local managed_label="$1"
+  local plist_path="$2"
+  local legacy_label="$3"
+
+  if launchctl print "gui/$UID_VALUE/$managed_label" >/dev/null 2>&1; then
+    echo "launchagent already loaded: $managed_label"
+    return 0
+  fi
+
+  if [[ "${ALLOW_MAC_FUZZ_DUPLICATE:-0}" != "1" ]] && \
+     launchctl print "gui/$UID_VALUE/$legacy_label" >/dev/null 2>&1; then
+    echo "skip managed duplicate: $managed_label because legacy $legacy_label is already loaded"
+    return 0
+  fi
+
+  bootstrap_if_missing "$managed_label" "$plist_path"
+}
+
+bootstrap_managed_if_no_legacy \
   "com.bugclaw.chromium-fuzz-audio-processing-managed" \
-  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-audio-processing-managed.plist" || true
+  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-audio-processing-managed.plist" \
+  "com.bugclaw.chromium-fuzz-audio-processing" || true
 
-bootstrap_if_missing \
+bootstrap_managed_if_no_legacy \
   "com.bugclaw.chromium-fuzz-indexeddb-managed" \
-  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-indexeddb-managed.plist" || true
+  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-indexeddb-managed.plist" \
+  "com.bugclaw.chromium-fuzz-indexeddb" || true
 
-bootstrap_if_missing \
+bootstrap_managed_if_no_legacy \
   "com.bugclaw.chromium-fuzz-angle-translator-managed" \
-  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-angle-translator-managed.plist" || true
+  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-angle-translator-managed.plist" \
+  "com.bugclaw.chromium-fuzz-angle-translator" || true
 
 bootstrap_if_missing \
   "com.bugclaw.chromium-fuzz-angle-texture-vk-pitch-narrow" \
   "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-angle-texture-vk-pitch-narrow.plist" || true
 
-bootstrap_if_missing \
+bootstrap_managed_if_no_legacy \
   "com.bugclaw.chromium-fuzz-webcodecs-managed" \
-  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-webcodecs-managed.plist" || true
+  "$ROOT/fuzz/launchagents/com.bugclaw.chromium-fuzz-webcodecs-managed.plist" \
+  "com.bugclaw.chromium-fuzz-webcodecs" || true

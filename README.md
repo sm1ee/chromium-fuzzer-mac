@@ -28,6 +28,10 @@ lane_registry.json   managed lane configuration
 | status-batch | scripts/run_fuzz_status_batch.sh | fleet status |
 | recover | scripts/recover_main_fuzzing_stack.sh | watchdog |
 
+## Launchd duplicate guard
+
+The local machine may have both legacy labels in `~/Library/LaunchAgents` and recovered managed labels bootstrapped from `~/.openclaw/workspace/chromium-vrp/fuzz/launchagents/`. The recover script now avoids bootstrapping a managed lane when the equivalent legacy lane is already loaded, unless `ALLOW_MAC_FUZZ_DUPLICATE=1` is set. `status_managed_fuzzers.sh` prints `duplicate_roots=N` when multiple `run_libfuzzer_target.sh` roots are still active for the same target.
+
 ## Build path
 
 Binaries expected at `~/.openclaw/workspace/chromium-vrp/src/out/libfuzzer-trend/`
