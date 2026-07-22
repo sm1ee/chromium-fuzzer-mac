@@ -35,7 +35,7 @@ if [ "$load" != "1" ]; then
     exit 0
 fi
 
-target="webcodecs_video_decoder_fuzzer"
+target="$PRIMARY_TARGET"
 provenance_file="$DATA_ROOT/metrics/$target.provenance.json"
 smoke_file="$DATA_ROOT/state/$target.smoke-ok.json"
 "$OPS_ROOT/bin/provenance-status.sh" "$target" >/dev/null
@@ -60,7 +60,7 @@ uid_value="$(/usr/bin/id -u)"
 labels=(
     com.bugclaw.chromium-worker-sync
     com.bugclaw.chromium-worker-health
-    com.bugclaw.chromium-fuzz-webcodecs
+    com.bugclaw.chromium-fuzz-media-h264
 )
 for label in "${labels[@]}"; do
     plist="/Users/smlee/Library/LaunchAgents/$label.plist"

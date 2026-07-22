@@ -6,7 +6,7 @@ OPS_ROOT="/Users/smlee/chromium-worker-ops"
 source "$OPS_ROOT/config/worker.env"
 
 if [ "$#" -eq 0 ]; then
-    set -- webcodecs_video_decoder_fuzzer
+    set -- "$PRIMARY_TARGET"
 fi
 
 lock_dir="$DATA_ROOT/state/build.lockdir"

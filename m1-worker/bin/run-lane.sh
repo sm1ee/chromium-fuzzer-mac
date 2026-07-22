@@ -5,7 +5,7 @@ OPS_ROOT="/Users/smlee/chromium-worker-ops"
 # shellcheck source=/dev/null
 source "$OPS_ROOT/config/worker.env"
 
-target="${1:-webcodecs_video_decoder_fuzzer}"
+target="${1:-$PRIMARY_TARGET}"
 max_total_time="${2:-21600}"
 workers="${3:-4}"
 binary="$OUT_DIR/$target"

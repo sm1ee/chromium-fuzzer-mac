@@ -7,7 +7,7 @@ This profile is the canonical configuration for `smlee@mac.server`.
 - Live operations: `/Users/smlee/chromium-worker-ops`
 - Runtime data: `/Users/smlee/chromium-fuzz-data`
 - Xcode: `/Users/smlee/Applications/Xcode.app`
-- Initial target: `webcodecs_video_decoder_fuzzer`
+- Initial target: `media_h264_decoder_fuzzer`
 
 The source and dependency repositories must be clean and pinned to the
 attested HEAD. A stale or mismatched checkout/binary, an unattested operations

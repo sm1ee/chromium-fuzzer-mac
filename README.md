@@ -42,9 +42,9 @@ git clone https://github.com/sm1ee/chromium-fuzzer-mac.git ~/chromium-fuzzer-mac
 ```
 
 The installer only copies LaunchAgents by default. Pass `--load` after a
-successful current-tree build and 60-second smoke run. The initial lane is
-`webcodecs_video_decoder_fuzzer`; additional macOS/Metal lanes must pass the
-same provenance and smoke gates before being loaded.
+successful current-tree build and 60-second smoke run. The initial M1 lane is
+`media_h264_decoder_fuzzer`; additional macOS/Metal lanes must pass the same
+provenance and smoke gates before being loaded.
 
 ## Active Fleet (10 launchd jobs)
 

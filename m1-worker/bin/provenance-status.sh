@@ -5,7 +5,7 @@ OPS_ROOT="/Users/smlee/chromium-worker-ops"
 # shellcheck source=/dev/null
 source "$OPS_ROOT/config/worker.env"
 
-target="${1:-webcodecs_video_decoder_fuzzer}"
+target="${1:-$PRIMARY_TARGET}"
 binary="$OUT_DIR/$target"
 metrics_file="$DATA_ROOT/metrics/$target.provenance.json"
 /bin/mkdir -p "$DATA_ROOT/metrics"

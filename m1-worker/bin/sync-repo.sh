@@ -77,13 +77,13 @@ head_value="$(/usr/bin/git -C "$REPO_ROOT" rev-parse HEAD)"
 for script in "$PROFILE_ROOT"/bin/*.sh; do /bin/bash -n "$script"; done
 for plist in "$PROFILE_ROOT"/launchagents/*.plist; do /usr/bin/plutil -lint "$plist" >/dev/null; done
 /bin/bash -n "$PROFILE_ROOT/config/worker.env"
-test -f "$REPO_ROOT/dicts/webcodecs_video_decoder_fuzzer.dict"
 
 stage="$(/usr/bin/mktemp -d "$DATA_ROOT/state/ops-stage.XXXXXX")"
 /bin/mkdir -p "$stage/bin" "$stage/config" "$stage/dicts" "$stage/launchagents"
 /bin/cp "$PROFILE_ROOT"/bin/*.sh "$stage/bin/"
 /bin/cp "$PROFILE_ROOT/config/worker.env" "$stage/config/worker.env"
-/bin/cp "$REPO_ROOT/dicts/webcodecs_video_decoder_fuzzer.dict" "$stage/dicts/"
+primary_dict="$REPO_ROOT/dicts/$PRIMARY_TARGET.dict"
+if [ -f "$primary_dict" ]; then /bin/cp "$primary_dict" "$stage/dicts/"; fi
 /bin/cp "$PROFILE_ROOT"/launchagents/*.plist "$stage/launchagents/"
 /bin/chmod 755 "$stage"/bin/*.sh
 /bin/chmod 644 "$stage/config/worker.env" "$stage"/dicts/* "$stage"/launchagents/*.plist

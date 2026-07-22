@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.bugclaw.chromium-fuzz-webcodecs</string>
+    <string>com.bugclaw.chromium-fuzz-media-h264</string>
     <key>ProgramArguments</key>
     <array>
         <string>/Users/smlee/chromium-worker-ops/bin/lane-loop.sh</string>
-        <string>webcodecs_video_decoder_fuzzer</string>
+        <string>media_h264_decoder_fuzzer</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -18,8 +18,8 @@
     <key>ProcessType</key>
     <string>Background</string>
     <key>StandardOutPath</key>
-    <string>/Users/smlee/chromium-fuzz-data/logs/webcodecs-loop.log</string>
+    <string>/Users/smlee/chromium-fuzz-data/logs/media-h264-loop.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/smlee/chromium-fuzz-data/logs/webcodecs-loop.log</string>
+    <string>/Users/smlee/chromium-fuzz-data/logs/media-h264-loop.log</string>
 </dict>
 </plist>

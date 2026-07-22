@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/Users/smlee/chromium-worker-ops/bin/provenance-status.sh</string>
-        <string>webcodecs_video_decoder_fuzzer</string>
+        <string>media_h264_decoder_fuzzer</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

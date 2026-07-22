@@ -27,6 +27,7 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn('/Users/smlee/chromium-worker', config)
         self.assertIn('/Users/smlee/chromium-fuzz-data', config)
         self.assertIn('/Users/smlee/chromium-fuzzer-mac', config)
+        self.assertIn('PRIMARY_TARGET="media_h264_decoder_fuzzer"', config)
         self.assertNotIn('/Users/bugclaw', config)
         self.assertNotIn('.openclaw', config)
 
@@ -60,6 +61,31 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("printf '%q '", source)
         self.assertNotIn("/usr/bin/printf '%q '", source)
 
+    def test_primary_target_is_consistent(self):
+        target = "media_h264_decoder_fuzzer"
+        config = (PROFILE / "config" / "worker.env").read_text(encoding="utf-8")
+        self.assertIn(f'PRIMARY_TARGET="{target}"', config)
+        for name in (
+            "lane-loop.sh",
+            "provenance-status.sh",
+            "run-lane.sh",
+            "smoke-current.sh",
+        ):
+            source = (PROFILE / "bin" / name).read_text(encoding="utf-8")
+            self.assertIn('${1:-$PRIMARY_TARGET}', source)
+        install = (PROFILE / "bin" / "install-launchagents.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('target="$PRIMARY_TARGET"', install)
+
+        for name in (
+            "com.bugclaw.chromium-fuzz-media-h264.plist",
+            "com.bugclaw.chromium-worker-health.plist",
+        ):
+            with (PROFILE / "launchagents" / name).open("rb") as handle:
+                data = plistlib.load(handle)
+            self.assertIn(target, data["ProgramArguments"])
+
     def test_repo_sync_is_fetch_ff_only(self):
         source = (PROFILE / "bin" / "sync-repo.sh").read_text(encoding="utf-8")
         self.assertIn("fetch --prune origin main", source)
@@ -89,7 +115,7 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertEqual(
             labels,
             {
-                "com.bugclaw.chromium-fuzz-webcodecs",
+                "com.bugclaw.chromium-fuzz-media-h264",
                 "com.bugclaw.chromium-worker-health",
                 "com.bugclaw.chromium-worker-sync",
             },
