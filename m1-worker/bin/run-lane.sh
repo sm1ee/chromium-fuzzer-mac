@@ -50,7 +50,9 @@ if [ -f "$OPS_ROOT/dicts/$target.dict" ]; then
 fi
 
 command_file="$session_dir/notes/command.txt"
-/usr/bin/printf '%q ' "$binary" "${fuzz_args[@]}" > "$command_file"
+# macOS /usr/bin/printf does not implement Bash's %q conversion. Use the
+# Bash builtin so the recorded command remains shell-replayable.
+printf '%q ' "$binary" "${fuzz_args[@]}" > "$command_file"
 /usr/bin/printf '\n' >> "$command_file"
 
 symbolizer="$SRC_ROOT/third_party/llvm-build/Release+Asserts/bin/llvm-symbolizer"

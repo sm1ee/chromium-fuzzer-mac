@@ -55,6 +55,11 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("ERROR: AddressSanitizer", source)
         self.assertIn("SUMMARY: AddressSanitizer", source)
 
+    def test_command_recording_uses_bash_printf_for_percent_q(self):
+        source = (PROFILE / "bin" / "run-lane.sh").read_text(encoding="utf-8")
+        self.assertIn("printf '%q '", source)
+        self.assertNotIn("/usr/bin/printf '%q '", source)
+
     def test_repo_sync_is_fetch_ff_only(self):
         source = (PROFILE / "bin" / "sync-repo.sh").read_text(encoding="utf-8")
         self.assertIn("fetch --prune origin main", source)
