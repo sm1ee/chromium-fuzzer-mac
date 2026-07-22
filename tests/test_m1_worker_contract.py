@@ -55,6 +55,8 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("canonical repository is dirty", source)
         self.assertNotIn("git -C \"$REPO_ROOT\" push", source)
         self.assertNotIn("git -C \"$REPO_ROOT\" commit", source)
+        self.assertIn('if [ ! -e "$OPS_ROOT" ]; then', source)
+        self.assertIn("previous operations directory preserved", source)
 
     def test_launch_requires_matching_smoke_stamp(self):
         source = (PROFILE / "bin" / "install-launchagents.sh").read_text(encoding="utf-8")

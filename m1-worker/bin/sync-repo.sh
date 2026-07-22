@@ -26,7 +26,14 @@ stage=""
 backup=""
 cleanup() {
     if [ -n "$stage" ] && [ -d "$stage" ]; then /bin/rm -rf "$stage"; fi
-    if [ -n "$backup" ] && [ -d "$backup" ]; then /bin/rm -rf "$backup"; fi
+    if [ -n "$backup" ] && [ -d "$backup" ]; then
+        if [ ! -e "$OPS_ROOT" ]; then
+            /bin/mv "$backup" "$OPS_ROOT" ||
+                echo "WARNING: previous operations directory preserved at $backup" >&2
+        else
+            echo "WARNING: previous operations directory preserved at $backup" >&2
+        fi
+    fi
     /bin/rmdir "$lock_dir" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
