@@ -60,6 +60,7 @@ class M1WorkerContractTest(unittest.TestCase):
         source = (PROFILE / "bin" / "run-lane.sh").read_text(encoding="utf-8")
         self.assertIn("printf '%q '", source)
         self.assertNotIn("/usr/bin/printf '%q '", source)
+        self.assertIn('cd "$session_dir/logs"', source)
 
     def test_primary_target_is_consistent(self):
         target = "media_h264_decoder_fuzzer"

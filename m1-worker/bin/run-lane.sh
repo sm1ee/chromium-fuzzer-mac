@@ -60,6 +60,9 @@ export ASAN_SYMBOLIZER_PATH="$symbolizer"
 export ASAN_OPTIONS="abort_on_error=1:allocator_may_return_null=1:detect_leaks=0:symbolize=1"
 export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1"
 
+# libFuzzer writes per-job fuzz-N.log files to the current directory. launchd
+# starts jobs with / as the working directory, which is read-only on macOS.
+cd "$session_dir/logs"
 set +e
 /usr/bin/caffeinate -dimsu "$binary" "${fuzz_args[@]}" 2>&1 | /usr/bin/tee "$session_dir/logs/run.log"
 rc=${PIPESTATUS[0]}
