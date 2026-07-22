@@ -15,6 +15,13 @@ class M1WorkerContractTest(unittest.TestCase):
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
 
+    def test_locking_scripts_exit_after_signals(self):
+        for name in ("build-current.sh", "run-lane.sh", "sync-repo.sh"):
+            source = (PROFILE / "bin" / name).read_text(encoding="utf-8")
+            self.assertIn("trap cleanup EXIT", source)
+            self.assertIn("trap 'exit 130' INT", source)
+            self.assertIn("trap 'exit 143' TERM", source)
+
     def test_worker_paths_are_separate_from_legacy_m4(self):
         config = (PROFILE / "config" / "worker.env").read_text(encoding="utf-8")
         self.assertIn('/Users/smlee/chromium-worker', config)

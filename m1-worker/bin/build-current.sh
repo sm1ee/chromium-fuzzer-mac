@@ -15,7 +15,9 @@ if ! /bin/mkdir "$lock_dir" 2>/dev/null; then
     exit 75
 fi
 cleanup() { /bin/rmdir "$lock_dir" 2>/dev/null || true; }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if [ ! -d "$SRC_ROOT/.git" ] || [ ! -f "$EXPECTED_HEAD_FILE" ]; then
     echo "checkout is not attested; run bootstrap-checkout.sh first" >&2

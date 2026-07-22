@@ -36,7 +36,9 @@ cleanup() {
     fi
     /bin/rmdir "$lock_dir" 2>/dev/null || true
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 if [ ! -d "$REPO_ROOT/.git" ]; then
     echo "canonical repository is missing: $REPO_ROOT" >&2

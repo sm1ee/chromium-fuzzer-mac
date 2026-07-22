@@ -19,7 +19,9 @@ if ! /bin/mkdir "$lock_dir" 2>/dev/null; then
     exit 75
 fi
 cleanup() { /bin/rmdir "$lock_dir" 2>/dev/null || true; }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 "$OPS_ROOT/bin/provenance-status.sh" "$target" >/dev/null
 if ! /usr/bin/jq -e '.current_tree_eligible == 1' "$provenance_file" >/dev/null; then
