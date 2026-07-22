@@ -18,3 +18,11 @@ The worker repository is read-only operationally: `sync-repo.sh` may fetch and
 fast-forward `main`, but it never creates commits or pushes. Corpus, logs,
 crashes, and state are kept outside Git. A sanitizer artifact is preserved for
 human triage and is never auto-promoted.
+
+Discord notifications use the same bot/channel model as the other workers.
+The bot token must exist outside Git at
+`/Users/smlee/chromium-fuzz-data/secrets/discord_bug_claw_bot_token` with mode
+`600` or `400`. `com.bugclaw.chromium-worker-discord-artifacts` checks every
+five minutes and sends only attested current-tree crash artifacts;
+`com.bugclaw.chromium-worker-discord-status` posts worker health every 30
+minutes. Both messages keep `auto_promote: false` and require human triage.

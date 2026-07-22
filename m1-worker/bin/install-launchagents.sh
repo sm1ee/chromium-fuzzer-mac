@@ -55,12 +55,23 @@ for field in source_head binary_fingerprint ops_source_head; do
         exit 12
     fi
 done
+if [ ! -s "$DISCORD_TOKEN_FILE" ]; then
+    echo "refusing launch: Discord bot token is missing: $DISCORD_TOKEN_FILE" >&2
+    exit 13
+fi
+token_mode="$(/usr/bin/stat -f '%Lp' "$DISCORD_TOKEN_FILE")"
+if [ "$token_mode" != "600" ] && [ "$token_mode" != "400" ]; then
+    echo "refusing launch: Discord bot token mode must be 600 or 400, got $token_mode" >&2
+    exit 14
+fi
 
 uid_value="$(/usr/bin/id -u)"
 labels=(
     com.bugclaw.chromium-worker-sync
     com.bugclaw.chromium-worker-health
     com.bugclaw.chromium-fuzz-media-h264
+    com.bugclaw.chromium-worker-discord-artifacts
+    com.bugclaw.chromium-worker-discord-status
 )
 for label in "${labels[@]}"; do
     plist="/Users/smlee/Library/LaunchAgents/$label.plist"

@@ -11,7 +11,7 @@ PROFILE = REPO_ROOT / "m1-worker"
 class M1WorkerContractTest(unittest.TestCase):
     def test_all_shell_files_parse(self):
         scripts = sorted((PROFILE / "bin").glob("*.sh"))
-        self.assertGreaterEqual(len(scripts), 8)
+        self.assertGreaterEqual(len(scripts), 11)
         for script in scripts:
             subprocess.run(["bash", "-n", str(script)], check=True)
 
@@ -104,10 +104,42 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("successful smoke stamp is missing", source)
         for field in ("source_head", "binary_fingerprint", "ops_source_head"):
             self.assertIn(field, source)
+        self.assertIn("Discord bot token is missing", source)
+        self.assertIn('token_mode', source)
+
+    def test_discord_notifications_are_human_gated(self):
+        config = (PROFILE / "config" / "worker.env").read_text(encoding="utf-8")
+        self.assertIn("DISCORD_TOKEN_FILE=", config)
+        self.assertNotIn("discord.com/api", config)
+        notifier = (PROFILE / "bin" / "notify-artifacts.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(".current_tree_eligible == 1", notifier)
+        self.assertIn(".support_only == 0", notifier)
+        self.assertIn(".detection_kpi_eligible == 1", notifier)
+        self.assertIn("auto_promote: false", notifier)
+        sender = (PROFILE / "bin" / "discord-send.sh").read_text(encoding="utf-8")
+        self.assertIn("Authorization: Bot $token", sender)
+        self.assertIn("DISCORD_DRY_RUN", sender)
+        self.assertIn("discord-rest-guard.tsv", sender)
+        self.assertIn('set_guard "auth_$status" 21600', sender)
+        status = (PROFILE / "bin" / "post-worker-status.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("detection_kpi_eligible:", status)
+        self.assertIn("ops_integrity:", status)
+        self.assertIn("for _ in {1..30}", status)
+
+        install = (PROFILE / "bin" / "install-launchagents.sh").read_text(
+            encoding="utf-8"
+        )
+        fuzzer_pos = install.index("com.bugclaw.chromium-fuzz-media-h264")
+        status_pos = install.index("com.bugclaw.chromium-worker-discord-status")
+        self.assertLess(fuzzer_pos, status_pos)
 
     def test_launchagents_are_valid_and_use_live_ops(self):
         plists = sorted((PROFILE / "launchagents").glob("*.plist"))
-        self.assertEqual(len(plists), 3)
+        self.assertEqual(len(plists), 5)
         labels = set()
         for path in plists:
             with path.open("rb") as handle:
@@ -119,6 +151,8 @@ class M1WorkerContractTest(unittest.TestCase):
             labels,
             {
                 "com.bugclaw.chromium-fuzz-media-h264",
+                "com.bugclaw.chromium-worker-discord-artifacts",
+                "com.bugclaw.chromium-worker-discord-status",
                 "com.bugclaw.chromium-worker-health",
                 "com.bugclaw.chromium-worker-sync",
             },
