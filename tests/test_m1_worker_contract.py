@@ -95,6 +95,8 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertNotIn("git -C \"$REPO_ROOT\" commit", source)
         self.assertIn('if [ ! -e "$OPS_ROOT" ]; then', source)
         self.assertIn("previous operations directory preserved", source)
+        self.assertIn('for dictionary in "$stage"/dicts/*', source)
+        self.assertIn('if [ -f "$dictionary" ]', source)
 
     def test_launch_requires_matching_smoke_stamp(self):
         source = (PROFILE / "bin" / "install-launchagents.sh").read_text(encoding="utf-8")

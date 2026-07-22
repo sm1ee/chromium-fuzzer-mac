@@ -86,7 +86,10 @@ primary_dict="$REPO_ROOT/dicts/$PRIMARY_TARGET.dict"
 if [ -f "$primary_dict" ]; then /bin/cp "$primary_dict" "$stage/dicts/"; fi
 /bin/cp "$PROFILE_ROOT"/launchagents/*.plist "$stage/launchagents/"
 /bin/chmod 755 "$stage"/bin/*.sh
-/bin/chmod 644 "$stage/config/worker.env" "$stage"/dicts/* "$stage"/launchagents/*.plist
+/bin/chmod 644 "$stage/config/worker.env" "$stage"/launchagents/*.plist
+for dictionary in "$stage"/dicts/*; do
+    if [ -f "$dictionary" ]; then /bin/chmod 644 "$dictionary"; fi
+done
 /usr/bin/printf '%s\n' "$head_value" > "$stage/deploy-head.txt"
 (
     cd "$stage"
