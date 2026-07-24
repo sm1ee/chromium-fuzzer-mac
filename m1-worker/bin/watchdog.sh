@@ -20,6 +20,7 @@ realert_secs="${WATCHDOG_REALERT_SECS:-21600}"
 worker_grace_secs="${WATCHDOG_WORKER_GRACE_SECS:-600}"
 log_stale_secs="${WATCHDOG_LOG_STALE_SECS:-900}"
 disk_low_gb="${WATCHDOG_DISK_LOW_GB:-20}"
+provenance_max_age_secs="${WATCHDOG_PROVENANCE_MAX_AGE_SECS:-900}"
 dry_run="${WATCHDOG_DRY_RUN:-0}"
 
 if ! /bin/mkdir "$lock_dir" 2>/dev/null; then
@@ -34,7 +35,6 @@ trap cleanup EXIT
 /usr/bin/touch "$alerts_file"
 /bin/chmod 600 "$alerts_file"
 
-now="$(/bin/date +%s)"
 uid_value="$(/usr/bin/id -u)"
 label="com.bugclaw.chromium-fuzz-media-h264"
 loaded=0
@@ -47,8 +47,21 @@ coordinator="$(/bin/ps -Ao command= | /usr/bin/awk \
 workers="$(/bin/ps -Ao command= | /usr/bin/awk \
     -v prefix="$binary " 'index($0, prefix) == 1 && $0 !~ /-jobs=4/ {count++} END {print count + 0}')"
 
-"$OPS_ROOT/bin/provenance-status.sh" "$target" >/dev/null
 provenance="$DATA_ROOT/metrics/$target.provenance.json"
+now="$(/bin/date +%s)"
+refresh_provenance=1
+if [ -f "$provenance" ]; then
+    provenance_age=$((now - $(/usr/bin/stat -f '%m' "$provenance")))
+    if [ "$provenance_age" -ge 0 ] && [ "$provenance_age" -lt "$provenance_max_age_secs" ]; then
+        refresh_provenance=0
+    fi
+fi
+if [ "$refresh_provenance" -eq 1 ]; then
+    "$OPS_ROOT/bin/provenance-status.sh" "$target" >/dev/null
+fi
+# Provenance refresh can take tens of seconds while dependency repositories are
+# inspected. Re-sample time before computing live log ages and alert cooldowns.
+now="$(/bin/date +%s)"
 reason="$(/usr/bin/jq -r '.reason // "missing"' "$provenance" 2>/dev/null || echo missing)"
 eligible="$(/usr/bin/jq -r '.current_tree_eligible // 0' "$provenance" 2>/dev/null || echo 0)"
 ops_integrity="$(/usr/bin/jq -r '.ops_integrity // 0' "$provenance" 2>/dev/null || echo 0)"

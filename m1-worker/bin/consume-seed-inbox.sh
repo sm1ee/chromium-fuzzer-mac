@@ -20,6 +20,14 @@ lock_dir="$DATA_ROOT/state/seed-admission.lockdir"
 
 /bin/mkdir -p "$inbox" "$processed" "$quarantine" "$work_root" "$corpus"
 /bin/chmod 700 "$inbox" "$processed" "$quarantine" "$work_root"
+has_packet=0
+for packet in "$inbox"/*.json; do
+    has_packet=1
+    break
+done
+if [ "$has_packet" -ne 1 ]; then
+    exit 0
+fi
 /usr/bin/touch "$ledger"
 /bin/chmod 600 "$ledger"
 if ! /bin/mkdir "$lock_dir" 2>/dev/null; then

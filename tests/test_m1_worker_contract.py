@@ -197,6 +197,7 @@ class M1WorkerContractTest(unittest.TestCase):
             "DISCORD_GUARD",
             "RECOVERED",
             "WATCHDOG_REALERT_SECS",
+            "WATCHDOG_PROVENANCE_MAX_AGE_SECS",
         ):
             self.assertIn(marker, watchdog)
         sync = (PROFILE / "bin" / "sync-repo.sh").read_text(encoding="utf-8")
