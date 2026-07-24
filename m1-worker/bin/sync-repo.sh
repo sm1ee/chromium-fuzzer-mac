@@ -115,10 +115,20 @@ if [ -f "$OPS_ROOT/deploy-manifest.tsv" ] &&
     exit 0
 fi
 
+blocking_lock="$(/usr/bin/find "$DATA_ROOT/state" -maxdepth 1 -type d -name '*.lockdir' \
+    ! -name repo-sync.lockdir ! -name "$PRIMARY_TARGET.lockdir" -print -quit)"
+lane_lock=0
+if [ -d "$DATA_ROOT/state/$PRIMARY_TARGET.lockdir" ]; then
+    lane_lock=1
+fi
 if [ -d "$DATA_ROOT/state/build.lockdir" ] ||
-   /usr/bin/find "$DATA_ROOT/state" -maxdepth 1 -type d -name '*.lockdir' ! -name repo-sync.lockdir | /usr/bin/grep -q .; then
+   [ -n "$blocking_lock" ] ||
+   { [ "$lane_lock" = "1" ] && [ "${SYNC_ALLOW_ACTIVE_LANE:-0}" != "1" ]; }; then
     echo "sync_head=$head_value deploy=deferred active_worker_lock=1"
     exit 0
+fi
+if [ "$lane_lock" = "1" ]; then
+    echo "sync_head=$head_value deploy=proceed active_lane_override=1"
 fi
 
 backup="$DATA_ROOT/state/ops-backup.$$"

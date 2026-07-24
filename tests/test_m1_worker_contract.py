@@ -106,6 +106,8 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("previous operations directory preserved", source)
         self.assertIn('for dictionary in "$stage"/dicts/*', source)
         self.assertIn('if [ -f "$dictionary" ]', source)
+        self.assertIn("SYNC_ALLOW_ACTIVE_LANE", source)
+        self.assertIn('! -name "$PRIMARY_TARGET.lockdir"', source)
 
     def test_launch_requires_matching_smoke_stamp(self):
         source = (PROFILE / "bin" / "install-launchagents.sh").read_text(encoding="utf-8")
