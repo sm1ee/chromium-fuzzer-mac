@@ -49,8 +49,7 @@ export ASAN_OPTIONS="abort_on_error=1:allocator_may_return_null=1:detect_leaks=0
 export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1"
 
 handled=0
-packets=("$inbox"/*.json)
-for packet in "${packets[@]}"; do
+for packet in "$inbox"/*.json; do
     if [ "$handled" -ge "$max_per_run" ]; then
         break
     fi

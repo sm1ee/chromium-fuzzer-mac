@@ -42,7 +42,8 @@ if /bin/launchctl print "gui/$uid_value/$label" >/dev/null 2>&1; then
     loaded=1
 fi
 coordinator="$(/bin/ps -Ao command= | /usr/bin/awk \
-    -v marker="$OPS_ROOT/bin/lane-loop.sh $target" 'index($0, marker) {count++} END {print count + 0}')"
+    -v prefix="/bin/bash $OPS_ROOT/bin/lane-loop.sh $target" \
+    'index($0, prefix) == 1 {count++} END {print count + 0}')"
 workers="$(/bin/ps -Ao command= | /usr/bin/awk \
     -v prefix="$binary " 'index($0, prefix) == 1 && $0 !~ /-jobs=4/ {count++} END {print count + 0}')"
 
@@ -75,6 +76,9 @@ fi
 if [ "$coordinator" -lt 1 ]; then
     codes+=("COORDINATOR_MISSING")
     details+=("lane-loop coordinator count=$coordinator")
+elif [ "$coordinator" -gt 1 ]; then
+    codes+=("COORDINATOR_DUPLICATE")
+    details+=("lane-loop coordinator count=$coordinator")
 fi
 if [ "$eligible" -ne 1 ] || [ "$ops_integrity" -ne 1 ]; then
     codes+=("PROVENANCE_$reason")
@@ -104,6 +108,10 @@ if [ "$loaded" -eq 1 ] && [ "$workers" -lt 4 ]; then
 elif [ "$dry_run" != "1" ]; then
     /bin/rm -f "$low_since_file"
 fi
+if [ "$workers" -gt 4 ]; then
+    codes+=("WORKERS_EXCESS")
+    details+=("workers=$workers/4 duplicate children suspected")
+fi
 if [ "$workers" -gt 0 ] && { [ "$log_age" -lt 0 ] || [ "$log_age" -ge "$log_stale_secs" ]; }; then
     codes+=("LOG_STALE")
     details+=("worker log age=${log_age}s threshold=${log_stale_secs}s")
@@ -120,7 +128,7 @@ fi
 
 key="HEALTHY"
 if [ "${#codes[@]}" -gt 0 ]; then
-    for preferred in LAUNCHD_UNLOADED PROVENANCE DISK_LOW COORDINATOR_MISSING WORKERS_LOW LOG_STALE DISCORD_GUARD; do
+    for preferred in LAUNCHD_UNLOADED PROVENANCE DISK_LOW COORDINATOR_MISSING COORDINATOR_DUPLICATE WORKERS_LOW WORKERS_EXCESS LOG_STALE DISCORD_GUARD; do
         for code in "${codes[@]}"; do
             if [[ "$code" == "$preferred"* ]]; then
                 key="$code"

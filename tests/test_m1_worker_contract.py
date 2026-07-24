@@ -188,7 +188,9 @@ class M1WorkerContractTest(unittest.TestCase):
         for marker in (
             "LAUNCHD_UNLOADED",
             "COORDINATOR_MISSING",
+            "COORDINATOR_DUPLICATE",
             "WORKERS_LOW",
+            "WORKERS_EXCESS",
             "LOG_STALE",
             "PROVENANCE_",
             "DISK_LOW",

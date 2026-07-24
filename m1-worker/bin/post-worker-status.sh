@@ -69,15 +69,19 @@ if [ -d "$artifact_root" ]; then
             asan_markers="$(/usr/bin/awk \
                 '/ERROR: AddressSanitizer|SUMMARY: AddressSanitizer/ {count++} END {print count + 0}' \
                 "${log_files[@]}" 2>/dev/null)"
-            progress="$(/usr/bin/grep -hE 'cov: [0-9]+.*ft: [0-9]+.*exec/s: [0-9]+' \
+            progress="$(/usr/bin/grep -hE 'ft: [0-9]+.*exec/s: [0-9]+' \
                 "${log_files[@]}" 2>/dev/null | /usr/bin/tail -n 1 || true)"
             if [ -n "$progress" ]; then
                 exec_per_sec="$(/usr/bin/printf '%s\n' "$progress" |
                     /usr/bin/sed -E 's/.*exec\/s: ([0-9]+).*/\1/')"
-                coverage="$(/usr/bin/printf '%s\n' "$progress" |
-                    /usr/bin/sed -E 's/.*cov: ([0-9]+).*/\1/')"
                 features="$(/usr/bin/printf '%s\n' "$progress" |
                     /usr/bin/sed -E 's/.*ft: ([0-9]+).*/\1/')"
+            fi
+            coverage_line="$(/usr/bin/grep -hE 'cov: [0-9]+' \
+                "${log_files[@]}" 2>/dev/null | /usr/bin/tail -n 1 || true)"
+            if [ -n "$coverage_line" ]; then
+                coverage="$(/usr/bin/printf '%s\n' "$coverage_line" |
+                    /usr/bin/sed -E 's/.*cov: ([0-9]+).*/\1/')"
             fi
         fi
     fi
