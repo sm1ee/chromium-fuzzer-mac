@@ -3,20 +3,20 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.bugclaw.chromium-worker-discord-status</string>
+    <string>com.bugclaw.chromium-worker-seed-admission</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/smlee/chromium-worker-ops/bin/post-worker-status.sh</string>
+        <string>/Users/smlee/chromium-worker-ops/bin/consume-seed-inbox.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>StartInterval</key>
-    <integer>21600</integer>
+    <integer>300</integer>
     <key>ProcessType</key>
     <string>Background</string>
     <key>StandardOutPath</key>
-    <string>/Users/smlee/chromium-fuzz-data/logs/discord-status.log</string>
+    <string>/Users/smlee/chromium-fuzz-data/logs/seed-admission.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/smlee/chromium-fuzz-data/logs/discord-status.log</string>
+    <string>/Users/smlee/chromium-fuzz-data/logs/seed-admission.log</string>
 </dict>
 </plist>

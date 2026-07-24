@@ -70,6 +70,8 @@ labels=(
     com.bugclaw.chromium-worker-sync
     com.bugclaw.chromium-worker-health
     com.bugclaw.chromium-fuzz-media-h264
+    com.bugclaw.chromium-worker-seed-admission
+    com.bugclaw.chromium-worker-watchdog
     com.bugclaw.chromium-worker-discord-artifacts
     com.bugclaw.chromium-worker-discord-status
 )

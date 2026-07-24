@@ -13,6 +13,8 @@ dicts/         fuzzer dictionaries
 generators/    corpus generators (WasmGC sandbox boundary — Linux-only target)
 lane_registry.json   managed lane configuration
 m1-worker/           M1 Max canonical source, deploy/sync, provenance, launchd
+launchagents/         M4 control-plane media seed router schedules
+tools/                strict media/H.264 packet router
 ```
 
 ## M1 Max worker
@@ -45,6 +47,28 @@ The installer only copies LaunchAgents by default. Pass `--load` after a
 successful current-tree build and 60-second smoke run. The initial M1 lane is
 `media_h264_decoder_fuzzer`; additional macOS/Metal lanes must pass the same
 provenance and smoke gates before being loaded.
+
+## M4 → M1 media seed control plane
+
+The local M4 owns issue/fix routing and packet delivery; the M1 owns corpus
+mutation and admission. This matches the Windows bridge while avoiding a
+Linux → local → worker raw-seed relay:
+
+```
+Linux issue-corpus mirror
+  -> M4 strict H.264 router + packet SHA/dedupe
+  -> mac.server seed inbox
+  -> deterministic existing-corpus NAL mutations
+  -> current M1 ASAN one-shot admission
+  -> corpus or quarantine
+```
+
+`scripts/seed_issue_corpus_media_queue.sh` reads the local Linux-origin mirror.
+`scripts/seed_fresh_media_fixes.sh` polls fresh Chromium commits. Both reject
+non-H.264 routes and deliver through `scripts/send_media_seed_packet.sh`.
+Install their M4 schedules with
+`scripts/install-media-seed-launchagents.sh`; pass `--load` only after a
+`MEDIA_SEED_DRY_RUN=1` check.
 
 ## Active Fleet (10 launchd jobs)
 

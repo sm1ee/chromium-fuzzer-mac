@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bugclaw.chromium-fuzzer-mac-seed-fresh</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-lc</string>
+        <string>cd /Users/bugclaw/chromium-fuzzer-mac &amp;&amp; MEDIA_FIX_SEED_MAX_PER_RUN=2 ./scripts/seed_fresh_media_fixes.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>8</integer>
+        <key>Minute</key>
+        <integer>50</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/bugclaw/.cache/chromium-fuzzer-mac-seeds/fresh.launchd.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/bugclaw/.cache/chromium-fuzzer-mac-seeds/fresh.launchd.log</string>
+</dict>
+</plist>

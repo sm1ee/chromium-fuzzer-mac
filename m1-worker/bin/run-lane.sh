@@ -70,7 +70,7 @@ set -e
 
 /usr/bin/printf '%s\n' "$rc" > "$session_dir/notes/exit_code.txt"
 crash_count="$(/usr/bin/find "$session_dir/crashes" -type f | /usr/bin/wc -l | /usr/bin/tr -d ' ')"
-asan_markers="$(/usr/bin/grep -Ec '(^|[[:space:]])(ERROR: AddressSanitizer|SUMMARY: AddressSanitizer)' "$session_dir/logs/run.log" 2>/dev/null || true)"
+asan_markers="$(/usr/bin/grep -Ec 'ERROR: AddressSanitizer|SUMMARY: AddressSanitizer' "$session_dir/logs/run.log" 2>/dev/null || true)"
 metrics_file="$DATA_ROOT/metrics/$target.latest-run.json"
 temp_file="$metrics_file.tmp.$$"
 /usr/bin/jq -n \

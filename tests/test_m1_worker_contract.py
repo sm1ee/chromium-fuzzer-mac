@@ -11,8 +11,15 @@ PROFILE = REPO_ROOT / "m1-worker"
 class M1WorkerContractTest(unittest.TestCase):
     def test_all_shell_files_parse(self):
         scripts = sorted((PROFILE / "bin").glob("*.sh"))
-        self.assertGreaterEqual(len(scripts), 11)
+        self.assertGreaterEqual(len(scripts), 13)
         for script in scripts:
+            subprocess.run(["bash", "-n", str(script)], check=True)
+        for script in (
+            REPO_ROOT / "scripts" / "send_media_seed_packet.sh",
+            REPO_ROOT / "scripts" / "seed_issue_corpus_media_queue.sh",
+            REPO_ROOT / "scripts" / "seed_fresh_media_fixes.sh",
+            REPO_ROOT / "scripts" / "install-media-seed-launchagents.sh",
+        ):
             subprocess.run(["bash", "-n", str(script)], check=True)
 
     def test_locking_scripts_exit_after_signals(self):
@@ -55,6 +62,7 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("auto_promote:false", source)
         self.assertIn("ERROR: AddressSanitizer", source)
         self.assertIn("SUMMARY: AddressSanitizer", source)
+        self.assertNotIn("(^|[[:space:]])(ERROR: AddressSanitizer", source)
 
     def test_command_recording_uses_bash_printf_for_percent_q(self):
         source = (PROFILE / "bin" / "run-lane.sh").read_text(encoding="utf-8")
@@ -123,12 +131,16 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("DISCORD_DRY_RUN", sender)
         self.assertIn("discord-rest-guard.tsv", sender)
         self.assertIn('set_guard "auth_$status" 21600', sender)
+        self.assertIn("triage_bundle:", notifier)
+        self.assertIn("logs.tar.gz", notifier)
         status = (PROFILE / "bin" / "post-worker-status.sh").read_text(
             encoding="utf-8"
         )
         self.assertIn("detection_kpi_eligible:", status)
         self.assertIn("ops_integrity:", status)
         self.assertIn("for _ in {1..30}", status)
+        self.assertIn("noise_artifacts_timeout_slow_oom:", status)
+        self.assertIn("seed_inbox_pending:", status)
 
         install = (PROFILE / "bin" / "install-launchagents.sh").read_text(
             encoding="utf-8"
@@ -139,7 +151,7 @@ class M1WorkerContractTest(unittest.TestCase):
 
     def test_launchagents_are_valid_and_use_live_ops(self):
         plists = sorted((PROFILE / "launchagents").glob("*.plist"))
-        self.assertEqual(len(plists), 5)
+        self.assertEqual(len(plists), 7)
         labels = set()
         for path in plists:
             with path.open("rb") as handle:
@@ -154,9 +166,50 @@ class M1WorkerContractTest(unittest.TestCase):
                 "com.bugclaw.chromium-worker-discord-artifacts",
                 "com.bugclaw.chromium-worker-discord-status",
                 "com.bugclaw.chromium-worker-health",
+                "com.bugclaw.chromium-worker-seed-admission",
                 "com.bugclaw.chromium-worker-sync",
+                "com.bugclaw.chromium-worker-watchdog",
             },
         )
+
+    def test_seed_admission_and_watchdog_fail_closed(self):
+        consumer = (PROFILE / "bin" / "consume-seed-inbox.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(".current_tree_eligible == 1", consumer)
+        self.assertIn("h264-seed-mutator.py", consumer)
+        self.assertIn("-runs=1", consumer)
+        self.assertIn("seed-quarantine", consumer)
+        self.assertIn("auto_promote:false", consumer)
+        watchdog = (PROFILE / "bin" / "watchdog.sh").read_text(encoding="utf-8")
+        for marker in (
+            "LAUNCHD_UNLOADED",
+            "COORDINATOR_MISSING",
+            "WORKERS_LOW",
+            "LOG_STALE",
+            "PROVENANCE_",
+            "DISK_LOW",
+            "DISCORD_GUARD",
+            "RECOVERED",
+            "WATCHDOG_REALERT_SECS",
+        ):
+            self.assertIn(marker, watchdog)
+        sync = (PROFILE / "bin" / "sync-repo.sh").read_text(encoding="utf-8")
+        self.assertIn('"$PROFILE_ROOT"/bin/*.py', sync)
+
+    def test_control_plane_seed_launchagents_are_valid(self):
+        plists = sorted(
+            (REPO_ROOT / "launchagents").glob(
+                "com.bugclaw.chromium-fuzzer-mac-seed-*.plist"
+            )
+        )
+        self.assertEqual(len(plists), 2)
+        for path in plists:
+            with path.open("rb") as handle:
+                data = plistlib.load(handle)
+            self.assertTrue(data["Label"].startswith(
+                "com.bugclaw.chromium-fuzzer-mac-seed-"
+            ))
 
 
 if __name__ == "__main__":

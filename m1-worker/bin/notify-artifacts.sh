@@ -58,11 +58,52 @@ while IFS= read -r artifact; do
     rel_path="${artifact#$DATA_ROOT/}"
     log_files=("$session_dir"/logs/*.log)
     asan_markers=0
+    sanitizer_markers=0
     if [ "${#log_files[@]}" -gt 0 ]; then
-        asan_markers="$(/usr/bin/awk '/(^|[[:space:]])(ERROR: AddressSanitizer|SUMMARY: AddressSanitizer)/ {count++} END {print count + 0}' "${log_files[@]}")"
+        asan_markers="$(/usr/bin/awk '/ERROR: AddressSanitizer|SUMMARY: AddressSanitizer/ {count++} END {print count + 0}' "${log_files[@]}")"
+        sanitizer_markers="$(/usr/bin/awk '/AddressSanitizer|UndefinedBehaviorSanitizer|MemorySanitizer|ThreadSanitizer|runtime error:|libFuzzer: deadly signal/ {count++} END {print count + 0}' "${log_files[@]}")"
     fi
 
-    /usr/bin/python3 -S - "$artifact" "$PRIMARY_TARGET" "$filename" "$size_bytes" "$rel_path" "$sha256" "$source_head" "$ops_head" "$asan_markers" > "$payload" <<'PY'
+    session_name="$(/usr/bin/basename "$session_dir")"
+    bundle_dir="$DATA_ROOT/triage/$PRIMARY_TARGET/$session_name-${sha256:0:16}"
+    /bin/mkdir -p "$bundle_dir"
+    /bin/chmod 700 "$bundle_dir"
+    if [ ! -f "$bundle_dir/$filename" ]; then
+        /bin/cp "$artifact" "$bundle_dir/$filename"
+    fi
+    /bin/cp "$manifest" "$bundle_dir/manifest.json"
+    if [ ! -f "$bundle_dir/logs.tar.gz" ]; then
+        if ! /usr/bin/tar -czf "$bundle_dir/logs.tar.gz" -C "$session_dir" logs; then
+            echo "failed to preserve raw logs for artifact: $artifact" >&2
+            continue
+        fi
+    fi
+    if [ "${#log_files[@]}" -gt 0 ]; then
+        /usr/bin/grep -nEh \
+            'AddressSanitizer|UndefinedBehaviorSanitizer|MemorySanitizer|ThreadSanitizer|runtime error:|libFuzzer: deadly signal' \
+            "${log_files[@]}" 2>/dev/null | /usr/bin/head -n 200 \
+            > "$bundle_dir/sanitizer-excerpt.txt" || true
+    else
+        : > "$bundle_dir/sanitizer-excerpt.txt"
+    fi
+    logs_sha256="$(/usr/bin/shasum -a 256 "$bundle_dir/logs.tar.gz" | /usr/bin/awk '{print $1}')"
+    /usr/bin/jq -n \
+        --arg created_at "$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+        --arg target "$PRIMARY_TARGET" \
+        --arg artifact "$filename" \
+        --arg artifact_sha256 "$sha256" \
+        --arg logs_sha256 "$logs_sha256" \
+        --arg source_head "$source_head" \
+        --arg ops_head "$ops_head" \
+        --arg session "${session_dir#$DATA_ROOT/}" \
+        --argjson artifact_size_bytes "$size_bytes" \
+        --argjson asan_markers "$asan_markers" \
+        --argjson sanitizer_markers "$sanitizer_markers" \
+        '{schema:"chromium-m1-crash-triage-bundle-v1",created_at:$created_at,target:$target,artifact:$artifact,artifact_sha256:$artifact_sha256,artifact_size_bytes:$artifact_size_bytes,logs_archive:"logs.tar.gz",logs_sha256:$logs_sha256,source_head:$source_head,ops_head:$ops_head,session:$session,asan_markers:$asan_markers,sanitizer_markers:$sanitizer_markers,auto_promote:false,human_triage_required:true}' \
+        > "$bundle_dir/metadata.json"
+    rel_bundle="${bundle_dir#$DATA_ROOT/}"
+
+    /usr/bin/python3 -I -S - "$artifact" "$PRIMARY_TARGET" "$filename" "$size_bytes" "$rel_path" "$sha256" "$source_head" "$ops_head" "$asan_markers" "$sanitizer_markers" "$rel_bundle" > "$payload" <<'PY'
 import json
 import pathlib
 import sys
@@ -71,8 +112,9 @@ from datetime import datetime, timezone
 path = pathlib.Path(sys.argv[1])
 target, filename, size_bytes, rel_path = sys.argv[2:6]
 sha256, source_head, ops_head, asan_markers = sys.argv[6:10]
-raw = path.read_bytes()
-sample = raw[:64]
+sanitizer_markers, rel_bundle = sys.argv[10:12]
+with path.open("rb") as handle:
+    sample = handle.read(64)
 try:
     preview = sample.decode("utf-8")
     if "\x00" in preview or not all(c.isprintable() or c in "\r\n\t" for c in preview):
@@ -81,13 +123,20 @@ try:
 except (UnicodeError, UnicodeDecodeError):
     preview = "[hex preview] " + " ".join(f"{b:02x}" for b in sample)
 
-signal = "ASAN runtime marker" if int(asan_markers) else "libFuzzer artifact; triage required"
+if int(asan_markers):
+    signal = "ASAN runtime marker"
+elif int(sanitizer_markers):
+    signal = "sanitizer/runtime marker"
+else:
+    signal = "libFuzzer artifact; triage required"
 content = (
     "Chromium fuzz artifact detected on M1 Max\n"
     f"time_utc: {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}\n"
     f"target: {target}\nfile: {filename}\nsize: {size_bytes} bytes\n"
     f"sha256: {sha256}\nsource_head: {source_head}\nops_head: {ops_head}\n"
     f"runtime_signal: {signal}\nauto_promote: false\npath: {rel_path}\n"
+    f"triage_bundle: {rel_bundle}\n"
+    "bundle_files: artifact, manifest.json, metadata.json, sanitizer-excerpt.txt, logs.tar.gz\n"
     f"preview: {preview}"
 )
 print(json.dumps({"content": content[:1900]}, ensure_ascii=False))

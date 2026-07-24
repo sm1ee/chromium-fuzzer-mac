@@ -75,17 +75,20 @@ fi
 head_value="$(/usr/bin/git -C "$REPO_ROOT" rev-parse HEAD)"
 
 for script in "$PROFILE_ROOT"/bin/*.sh; do /bin/bash -n "$script"; done
+for script in "$PROFILE_ROOT"/bin/*.py; do
+    /usr/bin/python3 -I -S -c 'import ast, pathlib, sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))' "$script"
+done
 for plist in "$PROFILE_ROOT"/launchagents/*.plist; do /usr/bin/plutil -lint "$plist" >/dev/null; done
 /bin/bash -n "$PROFILE_ROOT/config/worker.env"
 
 stage="$(/usr/bin/mktemp -d "$DATA_ROOT/state/ops-stage.XXXXXX")"
 /bin/mkdir -p "$stage/bin" "$stage/config" "$stage/dicts" "$stage/launchagents"
-/bin/cp "$PROFILE_ROOT"/bin/*.sh "$stage/bin/"
+/bin/cp "$PROFILE_ROOT"/bin/*.sh "$PROFILE_ROOT"/bin/*.py "$stage/bin/"
 /bin/cp "$PROFILE_ROOT/config/worker.env" "$stage/config/worker.env"
 primary_dict="$REPO_ROOT/dicts/$PRIMARY_TARGET.dict"
 if [ -f "$primary_dict" ]; then /bin/cp "$primary_dict" "$stage/dicts/"; fi
 /bin/cp "$PROFILE_ROOT"/launchagents/*.plist "$stage/launchagents/"
-/bin/chmod 755 "$stage"/bin/*.sh
+/bin/chmod 755 "$stage"/bin/*.sh "$stage"/bin/*.py
 /bin/chmod 644 "$stage/config/worker.env" "$stage"/launchagents/*.plist
 for dictionary in "$stage"/dicts/*; do
     if [ -f "$dictionary" ]; then /bin/chmod 644 "$dictionary"; fi
@@ -101,6 +104,9 @@ done
 )
 
 for script in "$stage"/bin/*.sh; do /bin/bash -n "$script"; done
+for script in "$stage"/bin/*.py; do
+    /usr/bin/python3 -I -S -c 'import ast, pathlib, sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))' "$script"
+done
 for plist in "$stage"/launchagents/*.plist; do /usr/bin/plutil -lint "$plist" >/dev/null; done
 
 if [ -f "$OPS_ROOT/deploy-manifest.tsv" ] &&
