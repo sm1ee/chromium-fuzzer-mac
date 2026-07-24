@@ -126,7 +126,9 @@ for packet in "$inbox"/*.json; do
         fi
     done
     source_kind="$(/usr/bin/jq -r '.source.kind' "$packet")"
-    source_id="$(/usr/bin/jq -r '.source.id' "$packet" | /usr/bin/tr '\t\r\n' ' ')"
+    source_id="$(/usr/bin/jq -r '.source.id' "$packet" |
+        /usr/bin/tr '\t\r\n' ' ' |
+        /usr/bin/sed -E 's/[[:space:]]+$//')"
     /usr/bin/jq -n \
         --arg completed_at "$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')" \
         --arg packet_id "$packet_id" \
