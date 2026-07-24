@@ -134,4 +134,9 @@ seed_inbox_pending: $seed_inbox
 seed_packets_processed: $seed_admissions
 auto_promote: false"
 /usr/bin/jq -n --arg content "$content" '{content:$content}' > "$payload"
-"$OPS_ROOT/bin/discord-send.sh" "$DISCORD_STATUS_CHANNEL_ID" "$payload"
+if [ "${STATUS_DRY_RUN:-0}" = "1" ]; then
+    /bin/cat "$payload"
+    DISCORD_DRY_RUN=1 "$OPS_ROOT/bin/discord-send.sh" "$DISCORD_STATUS_CHANNEL_ID" "$payload"
+else
+    "$OPS_ROOT/bin/discord-send.sh" "$DISCORD_STATUS_CHANNEL_ID" "$payload"
+fi

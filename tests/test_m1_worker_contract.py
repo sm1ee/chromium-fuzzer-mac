@@ -143,6 +143,7 @@ class M1WorkerContractTest(unittest.TestCase):
         self.assertIn("for _ in {1..30}", status)
         self.assertIn("noise_artifacts_timeout_slow_oom:", status)
         self.assertIn("seed_inbox_pending:", status)
+        self.assertIn("STATUS_DRY_RUN", status)
 
         install = (PROFILE / "bin" / "install-launchagents.sh").read_text(
             encoding="utf-8"
